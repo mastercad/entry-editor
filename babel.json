@@ -1,0 +1,31 @@
+{
+  "stories": [
+    {
+      "title": "New story",
+      "created": 1607114592660,
+      "submissionHistory": {},
+      "versions": [
+        "5cc8d67c-7ea1-4082-acbb-d56b507e83ea"
+      ],
+      "id": "c1c6fcad-0b42-4a84-a69a-e4736ddb3b7b"
+    }
+  ],
+  "versions": [
+    {
+      "storyId": "c1c6fcad-0b42-4a84-a69a-e4736ddb3b7b",
+      "name": "draft",
+      "wordCount": 0,
+      "created": 1607114593409,
+      "statistics": {},
+      "id": "5cc8d67c-7ea1-4082-acbb-d56b507e83ea"
+    }
+  ],
+  "backups": [
+    {
+      "timestamp": 1607114663804,
+      "localPath": "/home/mastercad/Documents/BabelWorkspaceBackups/babel-2020-12-04.backup.zip",
+      "cloudProviders": [],
+      "id": "faeb3cef-8321-4a8b-aec4-bb77c137a1e1"
+    }
+  ]
+}
