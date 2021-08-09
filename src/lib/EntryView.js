@@ -1,41 +1,50 @@
+import ValidationError from "./ValidationError";
+
 export default class EntryView {
-  constructor(viewConfig) {
-    this.viewConfig = viewConfig;
-    this.app = this.getElement('#root');
+  constructor(config) {
+    this.config = config;
+    this.app = null;
+
+    if (config
+      && undefined !== config.selector
+    ) {
+      this.app = this.getElement(config.selector);
+    } else {
+      this.app = this.getElement('#root')
+    }
+
+    if (!(this.app instanceof HTMLDivElement)) {
+      throw new ValidationError('Root Element not found!');
+    }
+
     this.form = this.createElement('form')
     this.inputs = [];
     this.ignoredEntryNames = [
       'id',
-      'complete'
+      'internalIdentifier'
     ];
 
-    let inputCount = 0;
-    for (let configEntryPos in viewConfig.items) {
-      this.inputs[inputCount] = this.createElement('input');
-      this.inputs[inputCount].type = viewConfig.items[configEntryPos].type;
-      this.inputs[inputCount].placeholder = viewConfig.items[configEntryPos].placeholder;
-      this.inputs[inputCount].name = viewConfig.items[configEntryPos].name;
+    if (undefined === config
+        || undefined === config.header
+    ) {
+      throw new ValidationError('No Header-Information set!');
+    }
 
-      // @TODO HERE IMPLEMENT A POSSIBILITY TO MERGE EXISTING ATTRIBUTES WITH USER SETTINGS
-      if (viewConfig.items[configEntryPos].attributes) {
-        viewConfig.items[configEntryPos].attributes.forEach(attributeData => {
-          let attributeName = Object.keys(attributeData)[0];
-          this.inputs[inputCount].setAttribute(attributeName, attributeData[attributeName]);
-        });
-      }
-      this.form.append(this.inputs[inputCount]);
-      ++inputCount;
-    };
+    this.header = config.header;
 
-    this.submitButton = this.createElement('button')
-    this.submitButton.textContent = 'Submit'
+    let inputRow = this.createInputRow(config.header);
+
+    this.form.append(inputRow);
+
+    this.submitButton = this.createElement('button');
+    this.submitButton.textContent = 'Submit';
     this.form.append(
       this.submitButton
     );
-    this.title = this.createElement('h1')
-    this.title.textContent = 'Entries'
-    this.entryList = this.createElement('ul', 'entry-list')
-    this.app.append(this.title, this.form, this.entryList)
+    this.title = this.createElement('h1');
+    this.title.textContent = undefined !== config.title ? config.title : 'Entries';
+    this.entryList = this.createElement('ul', 'entry-editor-list');
+    this.app.append(this.title, this.form, this.entryList);
 
     this._temporaryData = {};
 
@@ -46,6 +55,118 @@ export default class EntryView {
     this.inputs.forEach(function(input) {
       input.value = '';
     });
+  }
+
+  createEntryList(data) {
+    for (let dataPos in data) {
+      this.form.append(this.createEntryRow(data[dataPos]));
+    };
+  }
+
+  createEntryRow(rowData) {
+    let inputCount = 0;
+    let wrapper = this.createWrapper();
+    for (let entryPos in rowData) {
+      let input = this.createEntry(entryPos, rowData[entryPos]);
+      wrapper.append(input);
+      this.inputs[inputCount] = input;
+      ++inputCount;
+    }
+
+    return wrapper;
+  }
+
+  createEntry(headerPos, data) {
+    let entry = this.createElement('span');
+    let headerColumn = this.config.header[headerPos];
+    entry.classList.add('entry-editor-item');
+
+    for(let key in headerColumn) {
+      if ("class" === key) {
+        entry = this._extendElementWithClass(entry, headerColumn[key]);
+      } else if ("style" === key) {
+        entry = this._extendElementWithStyle(entry, headerColumn[key]);
+      } else if ("attributes" === key) {
+        entry = this._extendElementWithAttributes(entry, headerColumn[key]);
+      } else {
+        entry[key] = headerColumn[key];
+      }
+    }
+
+    entry.textContent = data;
+
+    return entry;
+  }
+
+  createInputRow(rowData) {
+    let inputCount = 0;
+    let wrapper = this.createWrapper();
+    wrapper.classList.add('entry-editor-input-row');
+
+    for (let entryPos in rowData) {
+      let input = this.createInput(entryPos);
+      wrapper.append(input);
+      this.inputs[inputCount] = input;
+      ++inputCount;
+    }
+
+    return wrapper;
+  }
+
+  createWrapper() {
+    let wrapper = this.createElement('div');
+    wrapper.classList.add('entry-editor-row');
+
+    return wrapper;
+  }
+
+  createInput(headerPos) {
+    let input = this.createElement('input');
+    let headerColumn = this.config.header[headerPos];
+    input.classList.add('entry-editor-item');
+
+    for(let key in headerColumn) {
+      if ("class" === key) {
+        input = this._extendElementWithClass(input, headerColumn[key]);
+      } else if ("style" === key) {
+        input = this._extendElementWithStyle(input, headerColumn[key]);
+      } else if ("attributes" === key) {
+        input = this._extendElementWithAttributes(input, headerColumn[key]);
+      } else {
+        input[key] = headerColumn[key];
+      }
+    }
+
+    return input;
+  }
+
+  _extendElementWithClass(element, classString) {
+    let classParts = classString.split(' ');
+    for (let classPart in classParts) {
+      element.classList.add(classPart);
+    }
+
+    return element;
+  }
+
+  _extendElementWithAttributes(element, attributes) {
+    attributes.forEach(attributeData => {
+      let attributeName = Object.keys(attributeData)[0];
+      let attribute = document.createAttribute(attributeName);
+      attribute.value = attributeData[attributeName];
+      element['attributes'].setNamedItem(attribute);
+    });
+
+    return element;
+  }
+
+  // @TODO HERE IMPLEMENT A POSSIBILITY TO MERGE EXISTING ATTRIBUTES WITH USER SETTINGS
+  _extendElementWithStyle(element, style) {
+    let attribute = document.createAttribute('style');
+    attribute.value = style;
+    element['attributes'].setNamedItem(attribute);
+
+    return element;
   }
 
   createElement(tag, className) {
@@ -62,58 +183,73 @@ export default class EntryView {
     return element;
   }
 
-  displayEntries(entries) {
+  displayEntries(entriesCollection) {
     // delete all nodes
     while (this.entryList.firstChild) {
       this.entryList.removeChild(this.entryList.firstChild);
     }
 
-    if (0 === entries.length) {
+    if (0 === entriesCollection.length) {
       const pElement = this.createElement('p');
       pElement.textContent = 'No entry found, create one!';
       this.entryList.append(pElement);
     } else {
-      entries.forEach(entry => {
-      const li = this.createElement('li');
-      li.id = entry.id;
+      for (let entriesPos in entriesCollection) {
+        let entryRow = entriesCollection[entriesPos];
+        const li = this.createElement('li', 'entry-editor-row');
+//        li.id = entry.internalIdentifier;
 
-      const checkbox = this.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.checked = entry.complete
+        for (let headerPos in this.header) {
+          let span = this.createElement('span', 'entry-editor-item');
+          let headerEntry = this.header[headerPos];
+          let columnName = this.header[headerPos]['name'];
 
-      li.append(checkbox);
+          if (this.ignoredEntryNames.includes(columnName)) {
+            continue;
+          }
 
-      for (let key in entry) {
-        if (this.ignoredEntryNames.includes(key)) {
-          continue;
+          span.contentEditable = true;
+          span.classList.add('editable');
+          span.id = columnName;
+
+          if (undefined !== entryRow[columnName]) {
+            span.textContent = entryRow[columnName];
+//            span.id = entryRow[columnName]['internalIdentifier'];
+          }
+
+          for (let key in headerEntry) {
+            if ('attributes' === key
+              || 'style' === key
+              || 'class' === key
+            ) {
+              continue;
+            }
+            span[key] = headerEntry[key];
+          }
+          if (undefined !== headerEntry['attributes']) {
+            this._extendElementWithAttributes(span, headerEntry['attributes']);
+          }
+
+          if (undefined !== headerEntry['class']) {
+            this._extendElementWithClass(span, headerEntry['class']);
+          }
+
+          if (undefined !== headerEntry['style']) {
+            this._extendElementWithStyle(span, headerEntry['style']);
+          }
+          li.append(span);
         }
-        let span = this.createElement('span');
-        span.contentEditable = true;
-        span.name=key;
-        span.classList.add('editable');
 
-        if (entry.complete) {
-          let strike = this.createElement('s');
-          strike.textContent = entry[key];
-          span.append(strike);
-        } else {
-          span.textContent = entry[key];
-        }
-        li.append(span);
+        const deleteButton = this.createElement('button', 'delete');
+        deleteButton.textContent = 'Delete';
+        li.append(deleteButton);
+
+        this.entryList.append(li);
       }
-
-      const deleteButton = this.createElement('button', 'delete');
-      deleteButton.textContent = 'Delete';
-      li.append(deleteButton);
-
-      this.entryList.append(li);
-      });
-
-      // only debugging
-      console.log(entries);
     }
   }
 
+  /* istanbul ignore next */
   _initLocalListeners() {
     this.entryList.addEventListener('input', event => {
       console.log(event);
@@ -137,15 +273,16 @@ export default class EntryView {
     })
   }
 
+  /* istanbul ignore next */
   bindAddEntry(handler) {
     this.form.addEventListener('submit', event => {
       event.preventDefault();
 
-      let viewConfigItems = this.viewConfig.items;
+      let configItems = this.config.items;
       let values = {};
       this.inputs.forEach(function(input, index) {
         if (input.value) {
-          values[viewConfigItems[index].name] = input.value;
+          values[configItems[index].name] = input.value;
         }
       });
 
@@ -156,16 +293,18 @@ export default class EntryView {
     });
   }
 
+  /* istanbul ignore next */
   bindDeleteEntry(handler) {
     this.entryList.addEventListener('click', event => {
       if ('delete' === event.target.className) {
-      const id = parseInt(event.target.parentElement.id);
+        const id = parseInt(event.target.parentElement.id);
 
-      handler(id);
+        handler(id);
       }
     });
   }
 
+  /* istanbul ignore next */
   bindEditEntry(handler) {
     this.entryList.addEventListener('focusout', event => {
       if (Object.keys(this._temporaryData).length) {
@@ -176,16 +315,6 @@ export default class EntryView {
         this._temporaryData = {};
       } else {
       // Reset complete row (maybe here we can also show validation information)
-      }
-    });
-  }
-
-  bindToggleEntry(handler) {
-    this.entryList.addEventListener('change', event => {
-      if ('checkbox' === event.target.type) {
-      const id = parseInt(event.target.parentElement.id);
-
-      handler(id);
       }
     });
   }

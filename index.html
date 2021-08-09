@@ -28,32 +28,42 @@
                 var elem = document.getElementById('root');
 
                 let config = {
-                    viewConfig: {
-                        items: [
-                            {
-                                name: "test",
-                                type: "text",
-                                value: "Test",
-                                placeholder: "Name",
-                                attributes: [
-                                    {
-                                        style: "border: 1px solid black;"
-                                    }
-                                ]
-                            },
-                            {
-                                name: "test1",
-                                type: "text",
-                                value: "Test1",
-                                placeholder: "Name"
-                            }
-                        ]
-                    }
+                    header: [
+                        {
+                            name: "TestName",
+                            type: "text",
+                            placeholder: "Name:"
+                        },
+                        {
+                            name: "TestPassword",
+                            type: "password",
+                            placeholder: "Password:"
+                        },
+                        {
+                            name: "id",
+                            type: "hidden"
+                        }
+                    ],
+                    data: [
+                        {
+                            TestName: "name",
+                            TestPassword: "password",
+                            id: 1
+                        },
+                        {
+                            TestName: "name1",
+                            TestPassword: "password1",
+                            id: 2
+                        },
+                        {
+                            TestName: "name2",
+                            TestPassword: "password2",
+                            id: 3
+                        }
+                    ]
                 };
 
-                let entryModel = new EntryEditor.EntryModel();
-                let entryView = new EntryEditor.EntryView(config.viewConfig);
-                let instance = new EntryEditor.EntryController(entryModel, entryView);
+                let instance = new EntryEditor(config);
             });
         </script>
     </body>

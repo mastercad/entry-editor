@@ -1,8 +1,12 @@
 import './scss/styles.scss';
-/*
-import EntryModel from './EntryModel.js'
-import EntryView from './EntryView.js'
-import EntryController from './EntryController.js'
 
-let controller = new EntryController(new EntryModel, new EntryView(config.viewConfig));
+/*
+export { default as EntryModel } from './lib/EntryModel';
+export { default as EntryView } from './lib/EntryView';
+export { default as EntryController } from './lib/EntryController';
 */
+
+import EntryController from './lib/EntryController.js'
+
+export default EntryController;
+//let controller = new EntryController();
