@@ -1,6 +1,6 @@
 {
     "name": "@byte-artist/entry-editor",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "full configurable editor to generate rows by config and let it edit, from todos to complex tables",
     "main": "dist/EntryEditor.js",
     "author": "andreas kempe",
