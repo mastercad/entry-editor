@@ -1,207 +1,207 @@
-import { default as makeId } from './makeId'
+import makeId from './makeId'
 
 export default class EntryModel {
-    constructor(header, data) {
-        // user defined data from database
-        this.header = [];
-        this.entries = [];
-        this.identifier = [];
-        this.ignoredKeysForMerge = [];
+  constructor (header, data) {
+    // user defined data from database
+    this.header = []
+    this.entries = []
+    this.identifier = []
+    this.ignoredKeysForMerge = []
 
-        if (undefined !== header) {
-            this.header = header;
-            this._consumeHeader(header);
-        }
-
-        if (undefined !== data) {
-            this._consumeData(data);
-        }
-
-        // data from localStorage, most not successfully saved in backend
-        if (undefined !== localStorage.getItem('entries')) {
-            this._consumeLocalStorage();
-        }
+    if (undefined !== header) {
+      this.header = header
+      this._consumeHeader(header)
     }
 
-    // consume header data and set needed information
-    // maybe extract this logic to service to prepare the model information regarding
-    // the current data
-    _consumeHeader(header) {
-        for (let headerPos in header) {
-            let columnData = header[headerPos];
-            for (let key in columnData) {
-                if ('identifier' === key) {
-                    this.identifier.push(header[headerPos]["name"]);
-                }
-            }
-        }
+    if (undefined !== data) {
+      this._consumeData(data)
     }
 
-    // current this function only copy data from parameter to currentData, in the future it is possible here also
-    // to maybe validate or adjust data or something else (but the better way for that should be the controller)
-    _consumeData(data) {
-        for (let rowPos in data) {
-            let row = data[rowPos];
-            for (let entryPos in row) {
-                if (undefined === this.entries[rowPos]) {
-                    this.entries[rowPos] = {};
-                }
-                this.entries[rowPos][entryPos] = row[entryPos];
-            }
-            if (0 === this.identifier.length) {
-                this.entries[rowPos]['internalIdentifier'] = makeId(12);
-            }
-        }
+    // data from localStorage, most not successfully saved in backend
+    if (undefined !== localStorage.getItem('entries')) {
+      this._consumeLocalStorage()
     }
+  }
 
-    _consumeLocalStorage() {
-        let localStorageEntries = (null !== localStorage.getItem('entries') ? JSON.parse(localStorage.getItem('entries')) : {});
-        if (undefined !== localStorageEntries['header']) {
-            let localHeaderHash = this._createHeaderHash(localStorageEntries['header']);
-            let headerHash = this._createHeaderHash(this.header);
+  // consume header data and set needed information
+  // maybe extract this logic to service to prepare the model information regarding
+  // the current data
+  _consumeHeader (header) {
+    for (const headerPos in header) {
+      const columnData = header[headerPos]
+      for (const key in columnData) {
+        if (key === 'identifier') {
+          this.identifier.push(header[headerPos].name)
+        }
+      }
+    }
+  }
 
-            // ignore header data because header columns are changed
-            if (headerHash &&
+  // current this function only copy data from parameter to currentData, in the future it is possible here also
+  // to maybe validate or adjust data or something else (but the better way for that should be the controller)
+  _consumeData (data) {
+    for (const rowPos in data) {
+      const row = data[rowPos]
+      for (const entryPos in row) {
+        if (undefined === this.entries[rowPos]) {
+          this.entries[rowPos] = {}
+        }
+        this.entries[rowPos][entryPos] = row[entryPos]
+      }
+      if (this.identifier.length === 0) {
+        this.entries[rowPos].internalIdentifier = makeId(12)
+      }
+    }
+  }
+
+  _consumeLocalStorage () {
+    const localStorageEntries = (localStorage.getItem('entries') !== null ? JSON.parse(localStorage.getItem('entries')) : {})
+    if (undefined !== localStorageEntries.header) {
+      const localHeaderHash = this._createHeaderHash(localStorageEntries.header)
+      const headerHash = this._createHeaderHash(this.header)
+
+      // ignore header data because header columns are changed
+      if (headerHash &&
                 localHeaderHash &&
                 localHeaderHash !== headerHash
-            ) {
-                return;
-            }
-            this._consumeHeaderFromLocalStorage(localStorageEntries['header']);
-        }
-
-        if (undefined !== localStorageEntries['data']) {
-            this._consumeEntryDataFromLocalStorage(localStorageEntries['data']);
-        }
+      ) {
+        return
+      }
+      this._consumeHeaderFromLocalStorage(localStorageEntries.header)
     }
 
-    // i think here it should compare the current header with the stored header (signature for stored data structure)
-    _consumeHeaderFromLocalStorage(headerData) {
-        for (let localStorageEntryPos in headerData) {
-            let headerEntry = headerData[localStorageEntryPos];
-            this.header.push(headerEntry);
-            if (undefined !== headerEntry['identifier']) {
-                this.identifier.push(headerEntry['name']);
-            }
+    if (undefined !== localStorageEntries.data) {
+      this._consumeEntryDataFromLocalStorage(localStorageEntries.data)
+    }
+  }
+
+  // i think here it should compare the current header with the stored header (signature for stored data structure)
+  _consumeHeaderFromLocalStorage (headerData) {
+    for (const localStorageEntryPos in headerData) {
+      const headerEntry = headerData[localStorageEntryPos]
+      this.header.push(headerEntry)
+      if (undefined !== headerEntry.identifier) {
+        this.identifier.push(headerEntry.name)
+      }
+    }
+  }
+
+  _consumeEntryDataFromLocalStorage (entryData) {
+    for (const localStorageEntryPos in entryData) {
+      const targetPos = this._searchIdentifier(this._createIdentifier(entryData[localStorageEntryPos]), this.entries)
+      if (targetPos !== false) {
+        this._mergeEntries(this.entries[targetPos], entryData[localStorageEntryPos])
+      } else {
+        if (undefined === entryData[localStorageEntryPos].internalIdentifier) {
+          entryData[localStorageEntryPos].internalIdentifier = makeId(12)
         }
+        this.entries.push(entryData[localStorageEntryPos])
+      }
+    }
+  }
+
+  _createHeaderHash (header) {
+    const columns = []
+    for (const headerPos in header) {
+      columns.push(header[headerPos].name.toLowerCase())
+    }
+    return columns.join('_')
+  }
+
+  _mergeEntries (targetEntry, sourceEntry) {
+    for (const sourceKey in sourceEntry) {
+      if (this.ignoredKeysForMerge.includes(sourceKey) === false) {
+        targetEntry[sourceKey] = sourceEntry[sourceKey]
+      }
+    }
+    return targetEntry
+  }
+
+  _commit () {
+    this.onEntryListChanged(this.entries)
+    localStorage.setItem('entries', JSON.stringify({ header: this.header, data: this.entries }))
+  }
+
+  // check if the given identifier exists in given target collection
+  _checkIdentifierExists (identifierKey, target) {
+    if (undefined === identifierKey ||
+            identifierKey.length === 0
+    ) {
+      return false
     }
 
-    _consumeEntryDataFromLocalStorage(entryData) {
-        for (let localStorageEntryPos in entryData) {
-            let targetPos = this._searchIdentifier(this._createIdentifier(entryData[localStorageEntryPos]), this.entries);
-            if (false !== targetPos) {
-                this._mergeEntries(this.entries[targetPos], entryData[localStorageEntryPos]);
-            } else {
-                if (undefined === entryData[localStorageEntryPos]["internalIdentifier"]) {
-                    entryData[localStorageEntryPos]["internalIdentifier"] = makeId(12);
-                }
-                this.entries.push(entryData[localStorageEntryPos]);
-            }
-        }
+    for (const targetPos in target) {
+      if (identifierKey === target[targetPos].internalIdentifier) {
+        return true
+      }
+      const targetIdentifier = this._createIdentifier(target[targetPos])
+      if (targetIdentifier === identifierKey) {
+        return true
+      }
     }
+    return false
+  }
 
-    _createHeaderHash(header) {
-        let columns = [];
-        for (let headerPos in header) {
-            columns.push(header[headerPos]['name'].toLowerCase());
-        }
-        return columns.join('_');
+  _searchIdentifier (identifierKey, target) {
+    if (undefined === identifierKey ||
+            identifierKey.length === 0
+    ) {
+      return false
     }
-
-    _mergeEntries(targetEntry, sourceEntry) {
-        for (let sourceKey in sourceEntry) {
-            if (false === this.ignoredKeysForMerge.includes(sourceKey)) {
-                targetEntry[sourceKey] = sourceEntry[sourceKey];
-            }
-        }
-        return targetEntry;
+    for (const targetPos in target) {
+      if (identifierKey === target[targetPos].internalIdentifier) {
+        return targetPos
+      }
+      const targetIdentifier = this._createIdentifier(target[targetPos])
+      if (targetIdentifier === identifierKey) {
+        return targetPos
+      }
     }
+    return false
+  }
 
-    _commit() {
-        this.onEntryListChanged(this.entries);
-        localStorage.setItem('entries', JSON.stringify({ header: this.header, data: this.entries }));
+  // creates values key from given pos
+  _createIdentifier (source) {
+    let identifierKey = ''
+    for (const key in this.identifier) {
+      identifierKey = identifierKey + '_' + source[this.identifier[key]]
     }
-
-    // check if the given identifier exists in given target collection
-    _checkIdentifierExists(identifierKey, target) {
-        if (undefined === identifierKey ||
-            0 === identifierKey.length
-        ) {
-            return false;
-        }
-
-        for (let targetPos in target) {
-            if (identifierKey === target[targetPos]["internalIdentifier"]) {
-                return true;
-            }
-            let targetIdentifier = this._createIdentifier(target[targetPos]);
-            if (targetIdentifier === identifierKey) {
-                return true;
-            }
-        }
-        return false;
+    if (identifierKey.length === 0 &&
+            undefined !== source.internalIdentifier
+    ) {
+      return source.internalIdentifier
     }
+    return identifierKey
+  }
 
-    _searchIdentifier(identifierKey, target) {
-        if (undefined === identifierKey ||
-            0 === identifierKey.length
-        ) {
-            return false;
-        }
-        for (let targetPos in target) {
-            if (identifierKey === target[targetPos]["internalIdentifier"]) {
-                return targetPos;
-            }
-            let targetIdentifier = this._createIdentifier(target[targetPos]);
-            if (targetIdentifier === identifierKey) {
-                return targetPos;
-            }
-        }
-        return false;
-    }
+  bindEntryListChanged (callback) {
+    this.onEntryListChanged = callback
+  }
 
-    // creates values key from given pos
-    _createIdentifier(source) {
-        let identifierKey = '';
-        for (let key in this.identifier) {
-            identifierKey = identifierKey + "_" + source[this.identifier[key]];
-        }
-        if (0 === identifierKey.length &&
-            undefined !== source['internalIdentifier']
-        ) {
-            return source['internalIdentifier'];
-        }
-        return identifierKey;
-    }
+  addEntry (data) {
+    const entry = { id: this.entries.length > 0 && undefined !== this.entries[this.entries.length - 1].id ? parseInt(this.entries[this.entries.length - 1].id) + 1 : this.entries.length + 1 }
+    for (const key in data) {
+      entry[key] = data[key]
+    };
+    entry.internalIdentifier = makeId(12)
 
-    bindEntryListChanged(callback) {
-        this.onEntryListChanged = callback;
-    }
+    this.entries.push(entry)
+    this._commit()
+  }
 
-    addEntry(data) {
-        let entry = { id: this.entries.length > 0 && undefined !== this.entries[this.entries.length - 1].id ? parseInt(this.entries[this.entries.length - 1].id) + 1 : this.entries.length + 1 }
-        for (let key in data) {
-            entry[key] = data[key];
+  editEntry (internalIdentifier, data) {
+    this.entries.forEach(function (entry) {
+      if (internalIdentifier === entry.internalIdentifier) {
+        for (const key in data) {
+          entry[key] = data[key]
         };
-        entry["internalIdentifier"] = makeId(12);
+      }
+    })
+    this._commit()
+  }
 
-        this.entries.push(entry);
-        this._commit();
-    }
-
-    editEntry(internalIdentifier, data) {
-        this.entries.forEach(function(entry) {
-            if (internalIdentifier === entry.internalIdentifier) {
-                for (let key in data) {
-                    entry[key] = data[key];
-                };
-            }
-        });
-        this._commit();
-    }
-
-    deleteEntry(internalIdentifier) {
-        this.entries = this.entries.filter(entry => entry.internalIdentifier !== internalIdentifier);
-        this._commit();
-    }
+  deleteEntry (internalIdentifier) {
+    this.entries = this.entries.filter(entry => entry.internalIdentifier !== internalIdentifier)
+    this._commit()
+  }
 }
