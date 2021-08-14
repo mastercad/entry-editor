@@ -7,15 +7,6 @@ const libraryName = 'EntryEditor'
 const outputFile = `${libraryName}.js`
 
 module.exports = {
-    entry: './src/index.js',
-    output: {
-        publicPath: './',
-        library: libraryName,
-        libraryTarget: 'umd',
-        libraryExport: 'default',
-        path: path.resolve(__dirname, 'dist'),
-        filename: outputFile
-    },
     optimization: {
         //      runtimeChunk: true,
         //      minimize: true,

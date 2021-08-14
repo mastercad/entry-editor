@@ -1,70 +1,67 @@
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="X-UA-Compatible" content="ie=edge">
-        <title>User Application</title>
 
-        <style>
-            html,body{
-                margin: 0;
-                padding: 0;
-                font-size: 14px;
-                font-family: sans-serif;
-                color: #111;
-                background-color: #eee;
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Entry Editor Example</title>
 
-                display: flex;
-                justify-content: center;
-                align-items: center;
-            }
-        </style>
-    </head>
-    <body>
-        <div id="root"></div>
+    <script src="dist/EntryEditor.js" language="javascript"></script>
 
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                var elem = document.getElementById('root');
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            font-size: 14px;
+            font-family: sans-serif;
+            color: #111;
+            background-color: #eee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
 
-                let config = {
-                    header: [
-                        {
-                            name: "TestName",
-                            type: "text",
-                            placeholder: "Name:"
-                        },
-                        {
-                            name: "TestPassword",
-                            type: "password",
-                            placeholder: "Password:"
-                        },
-                        {
-                            name: "id",
-                            type: "hidden"
-                        }
-                    ],
-                    data: [
-                        {
-                            TestName: "name",
-                            TestPassword: "password",
-                            id: 1
-                        },
-                        {
-                            TestName: "name1",
-                            TestPassword: "password1",
-                            id: 2
-                        },
-                        {
-                            TestName: "name2",
-                            TestPassword: "password2",
-                            id: 3
-                        }
-                    ]
-                };
+<body>
+    <div id="root"></div>
 
-                let instance = new EntryEditor(config);
-            });
-        </script>
-    </body>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var elem = document.getElementById('root');
+
+            let config = {
+                header: [{
+                    name: "TestName",
+                    type: "text",
+                    placeholder: "Name:"
+                }, {
+                    name: "TestPassword",
+                    type: "password",
+                    placeholder: "Password:"
+                }, {
+                    name: "id",
+                    type: "hidden"
+                }],
+                data: [{
+                    TestName: "name",
+                    TestPassword: "password",
+                    id: 1
+                }, {
+                    TestName: "name1",
+                    TestPassword: "password1",
+                    id: 2
+                }, {
+                    TestName: "name2",
+                    TestPassword: "password2",
+                    id: 3
+                }]
+            };
+
+            let instance = new EntryEditor(config);
+        });
+    </script>
+</body>
+
 </html>

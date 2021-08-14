@@ -22,7 +22,8 @@
     },
     "scripts": {
         "test": "jest --collect-coverage",
-        "build": "webpack --mode development --env development",
+        "build": "NODE_ENV=production webpack --mode production --env production",
+        "dev-build": "NODE_ENV=development webpack --mode development --env development",
         "start": "webpack-cli serve --mode development --env development"
     },
     "devDependencies": {
