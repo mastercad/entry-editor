@@ -29,10 +29,11 @@ jobs:
 
       - name: Run jest tests
         uses: stefanoeb/jest-action@1.0.3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Report Coverage
+        uses: ziishaned/jest-reporter-action@v0.0.1
         with:
-          test-command: "npm jest --coverage"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          test-command: "yarn jest --coverage"
 
       - name: Archive code coverage clover results
         uses: actions/upload-artifact@v2
