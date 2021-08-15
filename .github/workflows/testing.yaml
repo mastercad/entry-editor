@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [12.x]
+        node-version: [10.x, 12.x]
 
     steps:
       - uses: actions/checkout@v2
@@ -24,15 +24,9 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npx eslint
-
-      - name: Run jest tests
-        uses: stefanoeb/jest-action@1.0.3
-
-      - name: Report Coverage
-        uses: ziishaned/jest-reporter-action@v0.0.1
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
+      - run: yarn install
+      - run: yarn test
+      
       - name: Archive code coverage clover results
         uses: actions/upload-artifact@v2
         with:
